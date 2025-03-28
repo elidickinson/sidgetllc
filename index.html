@@ -3,76 +3,211 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sidget LLC | Coming Soon</title>
+    <title>Sky Homepage</title>
     <style>
-        * {
+        body, html {
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
         }
 
-        body {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            color: white;
-            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+        .sky {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, #6EAED7 0%, #9CCCEB 100%);
+            z-index: -10;
+        }
+
+        /* Cloud elements styled for better blending */
+        .cloud {
+            position: absolute;
+            background: #E6E6E6; /* Darker off-white for clouds */
+            border-radius: 50%;
+            opacity: 0.7; /* Reduced opacity for softer appearance */
+            box-shadow: 0 8px 5px rgba(0, 0, 0, 0.1);
+            filter: blur(8px); /* Significantly increased blur for smooth blending */
         }
 
         .content {
+            position: relative;
+            z-index: 10;
+            padding: 20px;
+            color: #333;
             text-align: center;
-            padding: 0 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            padding-top: 10vh;
         }
 
         h1 {
-            font-size: 3.5rem;
-            font-weight: 300;
-            letter-spacing: 0.2em;
-            margin-bottom: 1rem;
-        }
-
-        .divider {
-            width: 96px;
-            height: 1px;
-            background-color: rgba(255, 255, 255, 0.5);
-            margin: 0 auto 2rem;
-        }
-
-        h2 {
-            font-size: 1.5rem;
-            font-weight: 300;
-            letter-spacing: 0.1em;
+            font-size: 3rem;
             margin-bottom: 1rem;
         }
 
         p {
-            font-size: 1.25rem;
-            color: rgba(255, 255, 255, 0.8);
+            font-size: 1.2rem;
+            line-height: 1.6;
         }
 
-        @media (max-width: 600px) {
+        /* Responsive adjustments for smaller screens */
+        @media (max-width: 768px) {
             h1 {
-                font-size: 2.5rem;
+                font-size: 2rem;
             }
-            
-            h2 {
-                font-size: 1.25rem;
-            }
-            
             p {
                 font-size: 1rem;
             }
         }
+
+        .small {
+            margin-top: 65px;
+            color: #505050;
+            font-size: 1rem;
+        }
+        .small a {
+            color: #505050;
+        }
     </style>
 </head>
 <body>
+    <div class="sky"></div>
     <div class="content">
-        <h1>SIDGET LLC</h1>
+        <h1>SIDGET, LLC</h1>
         <div class="divider"></div>
-        <h2>Digital Media Consultancy</h2>
-        <p>Coming Soon</p>
+        <h2>A Digital Media Consultancy</h2>
+        <p></p>
+        <p class="small">email: <a href="mailto:info@sidget.com">info@sidget.com</a></p>
     </div>
+
+    <script>
+        // Cloud creation and animation system
+        (function() {
+            const sky = document.querySelector('.sky');
+            let clouds = [];
+            let resizeTimer;
+
+            /**
+             * Creates clouds distributed across the screen width
+             * Cleans up existing clouds when called (e.g., on resize)
+             */
+            function createClouds() {
+                // Clean up existing clouds
+                clouds.forEach(cloud => cloud.remove());
+                clouds = [];
+
+                // Determine number of clouds based on screen width
+                const cloudCount = Math.max(3, Math.floor(window.innerWidth / 300));
+                const spacing = window.innerWidth / cloudCount;
+
+                // Create clouds distributed across the screen width
+                for (let i = 0; i < cloudCount; i++) {
+                    // Position clouds with some randomness to avoid perfect spacing
+                    const initialX = i * spacing + (Math.random() * spacing * 0.5);
+                    clouds.push(createCloud(initialX));
+                }
+            }
+
+            /**
+             * Creates a single cloud with natural appearance
+             * @param {number} initialX - Starting X position for the cloud
+             * @returns {HTMLElement} - The created cloud element
+             */
+            function createCloud(initialX) {
+                // Create cloud container
+                const cloud = document.createElement('div');
+                cloud.className = 'cloud-container';
+                cloud.style.position = 'absolute';
+
+                // Set cloud dimensions - responsive to screen size
+                const baseSize = Math.max(40, Math.min(80, window.innerWidth / 12));
+                const cloudWidth = baseSize + Math.random() * baseSize * 0.8;
+                const heightRatio = 0.5 + Math.random() * 0.3;
+
+                // Create a more cohesive cloud shape
+                const mainCloud = document.createElement('div');
+                mainCloud.className = 'cloud';
+                mainCloud.style.width = cloudWidth + 'px';
+                mainCloud.style.height = (cloudWidth * heightRatio) + 'px';
+                mainCloud.style.borderRadius = '50px';
+                cloud.appendChild(mainCloud);
+
+                // Add puffs with significant overlap for a natural cloud look
+                const puffCount = 4 + Math.floor(Math.random() * 3);
+
+                for (let i = 0; i < puffCount; i++) {
+                    const puff = document.createElement('div');
+                    puff.className = 'cloud';
+
+                    // Larger puffs for better coverage
+                    const puffSize = cloudWidth * (0.5 + Math.random() * 0.3);
+                    puff.style.width = puffSize + 'px';
+                    puff.style.height = puffSize + 'px';
+
+                    // Create a tight, overlapping cluster of puffs
+                    // This layout ensures puffs create a single cohesive shape
+                    puff.style.top = (-puffSize * 0.4) + 'px';
+
+                    // Concentrate puffs in the center with some variation
+                    const horizontalPos = cloudWidth * 0.3 + Math.random() * (cloudWidth * 0.4);
+                    puff.style.left = (horizontalPos - puffSize/2) + 'px';
+
+                    cloud.appendChild(puff);
+                }
+
+                // Position cloud in the top third of the screen
+                cloud.style.top = (Math.random() * (window.innerHeight * 0.33)) + 'px';
+                cloud.style.left = initialX + 'px';
+                sky.appendChild(cloud);
+
+                // Animate cloud movement at a moderate pace
+                const duration = 600 + Math.random() * 400; // 10-16.7 minutes to cross screen
+
+                // Calculate pixels per frame based on 60fps
+                const speed = (window.innerWidth + cloudWidth * 2) / (duration * 60);
+                let position = initialX;
+
+                /**
+                 * Animation loop for cloud movement
+                 * Moves cloud slowly across screen and resets position when off-screen
+                 */
+                function animate() {
+                    position += speed;
+                    cloud.style.left = position + 'px';
+
+                    // Reset cloud when it moves off-screen
+                    if (position > window.innerWidth) {
+                        position = -cloudWidth;
+                        cloud.style.top = (Math.random() * (window.innerHeight * 0.33)) + 'px';
+                        cloud.style.left = position + 'px';
+                    }
+
+                    requestAnimationFrame(animate);
+                }
+
+                requestAnimationFrame(animate);
+                return cloud;
+            }
+
+            // Simple debounce function for resize events
+            function debounce(callback, delay = 250) {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(callback, delay);
+            }
+
+            // Initialize clouds
+            createClouds();
+
+            // Handle window resizing with debounce
+            window.addEventListener('resize', function() {
+                debounce(createClouds);
+            });
+        })();
+    </script>
 </body>
 </html>
