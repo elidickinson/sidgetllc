@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sky Homepage</title>
+    <title>Sidget.com</title>
     <style>
         body, html {
             margin: 0;
@@ -27,11 +27,11 @@
         /* Cloud elements styled for better blending */
         .cloud {
             position: absolute;
-            background: #E6E6E6; /* Darker off-white for clouds */
+            background: #E6E6E6;
             border-radius: 50%;
-            opacity: 0.7; /* Reduced opacity for softer appearance */
+            opacity: 0.7; /* change opacity for softer appearance */
             box-shadow: 0 8px 5px rgba(0, 0, 0, 0.1);
-            filter: blur(8px); /* Significantly increased blur for smooth blending */
+            filter: blur(8px); /* increased blur for smooth blending */
         }
 
         .content {
@@ -194,15 +194,14 @@
                 return cloud;
             }
 
+            // Initialize clouds
+            createClouds();
+
             // Simple debounce function for resize events
             function debounce(callback, delay = 250) {
                 clearTimeout(resizeTimer);
                 resizeTimer = setTimeout(callback, delay);
             }
-
-            // Initialize clouds
-            createClouds();
-
             // Handle window resizing with debounce
             window.addEventListener('resize', function() {
                 debounce(createClouds);
