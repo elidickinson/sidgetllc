@@ -165,19 +165,27 @@
                 cloud.style.left = initialX + 'px';
                 sky.appendChild(cloud);
 
-                // Animate cloud movement at a moderate pace
-                const duration = 600 + Math.random() * 400; // 10-16.7 minutes to cross screen
+                // Animate clouds
+                const duration = 250 + Math.random() * 300;
 
-                // Calculate pixels per frame based on 60fps
-                const speed = (window.innerWidth + cloudWidth * 2) / (duration * 60);
+                // Store timestamp for frame-rate independent animation
+                let lastTimestamp = 0;
+                const pixelsPerSecond = (window.innerWidth + cloudWidth * 2) / (duration);
                 let position = initialX;
 
                 /**
                  * Animation loop for cloud movement
-                 * Moves cloud slowly across screen and resets position when off-screen
+                 * Uses timestamp-based animation for consistent speed across browsers
                  */
-                function animate() {
-                    position += speed;
+                function animate(timestamp) {
+                    if (!lastTimestamp) lastTimestamp = timestamp;
+
+                    // Calculate time difference in seconds
+                    const deltaTime = (timestamp - lastTimestamp) / 1000;
+                    lastTimestamp = timestamp;
+
+                    // Move based on elapsed time rather than assuming frame rate
+                    position += pixelsPerSecond * deltaTime;
                     cloud.style.left = position + 'px';
 
                     // Reset cloud when it moves off-screen
