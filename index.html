@@ -170,7 +170,8 @@
 
                 // Store timestamp for frame-rate independent animation
                 let lastTimestamp = 0;
-                const pixelsPerSecond = (window.innerWidth + cloudWidth * 2) / (duration);
+                // Base speed on cloud width for more consistent feel across screen sizes
+                const pixelsPerSecond = (cloudWidth * 0.5) + (Math.random() * cloudWidth * 0.3);
                 let position = initialX;
 
                 /**
