@@ -125,16 +125,16 @@
                 cloud.style.position = 'absolute';
 
                 // Set cloud dimensions - responsive to screen size
-                const baseSize = Math.max(40, Math.min(80, window.innerWidth / 12));
-                const cloudWidth = baseSize + Math.random() * baseSize * 0.8;
-                const heightRatio = 0.5 + Math.random() * 0.3;
+                const baseSize = Math.max(60, Math.min(120, window.innerWidth / 8));
+                const cloudWidth = baseSize + Math.random() * baseSize * 1.5;
+                const heightRatio = 0.3 + Math.random() * 0.2;
 
                 // Create a more cohesive cloud shape
                 const mainCloud = document.createElement('div');
                 mainCloud.className = 'cloud';
                 mainCloud.style.width = cloudWidth + 'px';
                 mainCloud.style.height = (cloudWidth * heightRatio) + 'px';
-                mainCloud.style.borderRadius = '50px';
+                mainCloud.style.borderRadius = '100px';
                 cloud.appendChild(mainCloud);
 
                 // Add puffs with significant overlap for a natural cloud look
@@ -153,8 +153,8 @@
                     // This layout ensures puffs create a single cohesive shape
                     puff.style.top = (-puffSize * 0.4) + 'px';
 
-                    // Concentrate puffs in the center with some variation
-                    const horizontalPos = cloudWidth * 0.3 + Math.random() * (cloudWidth * 0.4);
+                    // Spread puffs horizontally for oblong shape
+                    const horizontalPos = cloudWidth * 0.1 + Math.random() * (cloudWidth * 0.8);
                     puff.style.left = (horizontalPos - puffSize/2) + 'px';
 
                     cloud.appendChild(puff);
