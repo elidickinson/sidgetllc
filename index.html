@@ -87,8 +87,7 @@
         <h1>SIDGET, LLC</h1>
         <div class="divider"></div>
         <h2>A Digital Media Consultancy</h2>
-        <p></p>
-        <p class="small">email: <a href="mailto:info@sidget.com">info@sidget.com</a></p>
+        <p class="small" style="position: fixed; bottom: 30px; left: 0; right: 0; text-align: center;">email <a href="mailto:info@sidget.com">info@sidget.com</a></p>
     </div>
 
     <script>
@@ -120,7 +119,7 @@
             }
 
             /**
-             * Creates a single cloud with natural appearance
+             * Creates a single cloud
              * @param {number} initialX - Starting X position for the cloud
              * @returns {HTMLElement} - The created cloud element
              */
@@ -153,7 +152,7 @@
 
                     // Larger puffs for better coverage
                     const puffSize = cloudWidth * (0.5 + Math.random() * 0.3);
-                    puff.style.width = puffSize + 'px';
+                    puff.style.width = Math.round(puffSize * 1.2) + 'px';
                     puff.style.height = puffSize + 'px';
 
                     // Create a tight, overlapping cluster of puffs
@@ -172,13 +171,10 @@
                 cloud.style.left = initialX + 'px';
                 sky.appendChild(cloud);
 
-                // Animate clouds
-                const duration = 250 + Math.random() * 300;
-
                 // Store timestamp for frame-rate independent animation
                 let lastTimestamp = 0;
                 // Base speed on cloud width for more consistent feel across screen sizes
-                const pixelsPerSecond = (cloudWidth * 0.05) + (Math.random() * cloudWidth * 0.03);
+                const pixelsPerSecond = (cloudWidth * 0.05) + (Math.random() * cloudWidth * 0.04);
                 let position = initialX;
 
                 /**
@@ -198,12 +194,11 @@
                     // Use transform instead of changing left property for better performance
                     cloud.style.transform = `translateZ(0) translateX(${position - initialX}px)`;
 
+                    const widthFudge = 25;
                     // Reset cloud when it moves off-screen
-                    if (position > window.innerWidth) {
-                        position = -cloudWidth;
+                    if (position > window.innerWidth + widthFudge) {
+                        initialX = position = 0 - cloudWidth - widthFudge;
                         cloud.style.top = (Math.random() * (window.innerHeight * 0.33)) + 'px';
-                        // Reset transform and left position when moving cloud back
-                        cloud.style.transform = 'translateZ(0)';
                         cloud.style.left = position + 'px';
                         lastTimestamp = timestamp; // Reset timestamp
                     }
