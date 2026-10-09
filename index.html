@@ -24,18 +24,39 @@
             z-index: -10;
         }
 
-        /* Blur and opacity live on the container so overlapping puffs blend as one shape */
+        /* Opacity and blur are set per-cloud in JS for depth */
         .cloud-container {
             position: absolute;
-            opacity: 0.7;
-            filter: blur(8px);
             will-change: transform;
         }
 
         .cloud {
             position: absolute;
-            background: #E6E6E6;
+            border-radius: 50% 50% 45% 45% / 60% 60% 40% 40%;
+            /* Lit from above: white core fading out early so overlapping
+               puffs blend instead of stacking visible core edges */
+            background: radial-gradient(circle at 50% 40%,
+                rgba(255, 255, 255, 1) 0%,
+                rgba(255, 255, 255, 0.9) 35%,
+                rgba(240, 246, 252, 0.4) 62%,
+                rgba(240, 246, 252, 0) 88%);
+        }
+
+        /* Underside shading, clipped by .cloud-shadow-wrap to the cloud's base */
+        .cloud-shadow {
+            position: absolute;
             border-radius: 50%;
+            background: radial-gradient(ellipse at 50% 50%,
+                rgba(158, 184, 216, 0.55) 0%,
+                rgba(158, 184, 216, 0.25) 45%,
+                rgba(158, 184, 216, 0) 70%);
+        }
+
+        .cloud-shadow-wrap {
+            position: absolute;
+            top: 0;
+            left: 0;
+            overflow: hidden;
         }
 
         .content {
@@ -87,6 +108,21 @@
     </style>
 </head>
 <body>
+    <!-- Roughens cloud edges so overlapping puffs blend into one lumpy shape -->
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+        <filter id="cloud-rough-1" x="-25%" y="-25%" width="150%" height="150%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.012" numOctaves="3" seed="7" result="noise"/>
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="40" xChannelSelector="R" yChannelSelector="G"/>
+        </filter>
+        <filter id="cloud-rough-2" x="-25%" y="-25%" width="150%" height="150%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.015" numOctaves="3" seed="42" result="noise"/>
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="45" xChannelSelector="R" yChannelSelector="G"/>
+        </filter>
+        <filter id="cloud-rough-3" x="-25%" y="-25%" width="150%" height="150%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.01" numOctaves="3" seed="133" result="noise"/>
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="38" xChannelSelector="R" yChannelSelector="G"/>
+        </filter>
+    </svg>
     <div class="sky" aria-hidden="true"></div>
     <div class="content">
         <h1>SIDGET.COM</h1>
@@ -123,46 +159,80 @@
              * @returns {object} - The cloud state, with its DOM element
              */
             function createCloud(initialX) {
+                // Depth decides how near the cloud feels: near clouds are
+                // large, bright and sharp, far clouds small, faint and soft
+                const depth = Math.random();
+
                 const el = document.createElement('div');
                 el.className = 'cloud-container';
 
                 // Dimensions and horizontal positions use viewport-width units
                 const baseSize = Math.max(60, Math.min(120, window.innerWidth / 8)) / window.innerWidth * 100;
-                const cloudWidth = baseSize + Math.random() * baseSize * 1.5;
+                const cloudWidth = baseSize * (0.5 + depth * 0.7) * (1 + Math.random() * 0.8);
                 const heightRatio = 0.3 + Math.random() * 0.2;
+                const bodyHeight = cloudWidth * heightRatio;
 
                 // Create a more cohesive cloud shape
                 const mainCloud = document.createElement('div');
                 mainCloud.className = 'cloud';
                 mainCloud.style.width = cloudWidth + 'vw';
-                mainCloud.style.height = (cloudWidth * heightRatio) + 'vw';
-                mainCloud.style.borderRadius = '100px';
+                mainCloud.style.height = bodyHeight + 'vw';
+                mainCloud.style.borderRadius = '50% 50% 45% 45% / 60% 60% 40% 40%';
                 el.appendChild(mainCloud);
 
                 // Add puffs with significant overlap for a natural cloud look
                 const puffCount = 4 + Math.floor(Math.random() * 3);
 
+                // Spread puffs evenly along the body with a bit of jitter, so
+                // the shape stays balanced instead of leaning to one side
                 for (let i = 0; i < puffCount; i++) {
                     const puff = document.createElement('div');
                     puff.className = 'cloud';
 
-                    // Larger puffs for better coverage
-                    const puffSize = cloudWidth * (0.5 + Math.random() * 0.3);
+                    // Puff sizes vary a lot so overlapping edges don't line up
+                    const puffSize = cloudWidth * (0.45 + Math.random() * 0.35);
                     puff.style.width = (puffSize * 1.2) + 'vw';
                     puff.style.height = puffSize + 'vw';
 
-                    // Create a tight, overlapping cluster of puffs
-                    // This layout ensures puffs create a single cohesive shape
-                    puff.style.top = (-puffSize * 0.4) + 'vw';
+                    // Puffs sit higher than the body's center for a lumpy top,
+                    // but bottoms are clamped to the base so the underside stays flat
+                    const puffTop = Math.min(
+                        -puffSize * (0.2 + Math.random() * 0.3),
+                        bodyHeight - puffSize
+                    );
+                    puff.style.top = puffTop + 'vw';
 
-                    // Spread puffs horizontally for oblong shape
-                    const horizontalPos = cloudWidth * 0.1 + Math.random() * (cloudWidth * 0.8);
-                    puff.style.left = (horizontalPos - puffSize/2) + 'vw';
+                    const slot = (i + 0.5) / puffCount;
+                    const horizontalPos = cloudWidth * (0.08 + slot * 0.84 + (Math.random() - 0.5) * 0.1);
+                    puff.style.left = (horizontalPos - puffSize * 0.6) + 'vw';
 
                     el.appendChild(puff);
                 }
 
+                // Underside shading: the ellipse is clipped to the body's box so
+                // only its top arc shows, tinting the base without poking below it
+                const shadeWrap = document.createElement('div');
+                shadeWrap.className = 'cloud-shadow-wrap';
+                shadeWrap.style.width = cloudWidth + 'vw';
+                shadeWrap.style.height = bodyHeight + 'vw';
+
+                const shadow = document.createElement('div');
+                shadow.className = 'cloud-shadow';
+                shadow.style.width = (cloudWidth * 0.95) + 'vw';
+                shadow.style.height = (bodyHeight * 0.8) + 'vw';
+                shadow.style.left = (cloudWidth * 0.025) + 'vw';
+                shadow.style.bottom = (-bodyHeight * 0.35) + 'vw';
+                shadow.style.opacity = 0.7;
+
+                shadeWrap.appendChild(shadow);
+                el.appendChild(shadeWrap);
+
                 sky.appendChild(el);
+
+                el.style.opacity = 0.5 + depth * 0.45;
+                const blurPx = 7 - depth * 5;
+                const rough = 1 + Math.floor(Math.random() * 3);
+                el.style.filter = `url(#cloud-rough-${rough}) blur(${blurPx}px)`;
 
                 const cloud = {
                     el: el,
@@ -177,10 +247,10 @@
             }
 
             /**
-             * Positions a cloud and moves it to a random height in the top third
+             * Positions a cloud and moves it to a random height in the top half of the sky
              */
             function place(cloud) {
-                cloud.el.style.top = (Math.random() * 33) + 'vh';
+                cloud.el.style.top = (Math.random() * 45) + 'vh';
                 cloud.el.style.transform = `translate3d(${cloud.x}vw, 0, 0)`;
             }
 
