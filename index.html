@@ -19,36 +19,33 @@
             top: 0;
             left: 0;
             width: 100%;
-            height: 100%;
+            height: 100dvh;
             background: linear-gradient(to bottom, #5D9DC5 0%, #A5D8F5 100%);
             z-index: -10;
         }
 
-        /* Cloud elements styled for better blending */
+        /* Blur and opacity live on the container so overlapping puffs blend as one shape */
+        .cloud-container {
+            position: absolute;
+            opacity: 0.7;
+            filter: blur(8px);
+            will-change: transform;
+        }
+
         .cloud {
             position: absolute;
             background: #E6E6E6;
             border-radius: 50%;
-            opacity: 0.7; /* change opacity for softer appearance */
-            box-shadow: 0 8px 5px rgba(0, 0, 0, 0.1);
-            filter: blur(8px); /* increased blur for smooth blending */
-            will-change: transform; /* hint for browser to optimize */
-        }
-
-        .cloud-container {
-            position: absolute;
-            will-change: transform; /* hint for browser to optimize */
         }
 
         .content {
             position: relative;
             z-index: 10;
-            padding: 20px;
+            padding: 10vh 20px 0;
             color: #333;
             text-align: center;
             max-width: 800px;
             margin: 0 auto;
-            padding-top: 10vh;
         }
 
         h1 {
@@ -79,38 +76,40 @@
         .small a {
             color: #505050;
         }
+
+        footer {
+            position: fixed;
+            bottom: 30px;
+            left: 0;
+            right: 0;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
-    <div class="sky"></div>
+    <div class="sky" aria-hidden="true"></div>
     <div class="content">
         <h1>SIDGET.COM</h1>
-        <div class="divider"></div>
         <h2>A Digital Media Services Company</h2>
-        <p class="small" style="position: fixed; bottom: 30px; left: 0; right: 0; text-align: center;">copyright &copy; sidget llc &nbsp;&middot;&nbsp; contact <a href="mailto:info@sidget.com">info@sidget.com</a></p>
     </div>
+    <footer>
+        <p class="small">copyright &copy; sidget llc &nbsp;&middot;&nbsp; contact <a href="mailto:info@sidget.com">info@sidget.com</a></p>
+    </footer>
 
     <script>
         // Cloud creation and animation system
         (function() {
             const sky = document.querySelector('.sky');
-            let clouds = [];
-            let resizeTimer;
+            const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            const clouds = [];
 
             /**
              * Creates clouds distributed across the screen width
-             * Cleans up existing clouds when called (e.g., on resize)
              */
             function createClouds() {
-                // Clean up existing clouds
-                clouds.forEach(cloud => cloud.remove());
-                clouds = [];
-
-                // Determine number of clouds based on screen width
                 const cloudCount = Math.max(3, Math.floor(window.innerWidth / 300));
-                const spacing = window.innerWidth / cloudCount;
+                const spacing = 100 / cloudCount;
 
-                // Create clouds distributed across the screen width
                 for (let i = 0; i < cloudCount; i++) {
                     // Position clouds with some randomness to avoid perfect spacing
                     const initialX = i * spacing + (Math.random() * spacing * 0.5);
@@ -121,27 +120,24 @@
             /**
              * Creates a single cloud
              * @param {number} initialX - Starting X position for the cloud
-             * @returns {HTMLElement} - The created cloud element
+             * @returns {object} - The cloud state, with its DOM element
              */
             function createCloud(initialX) {
-                // Create cloud container
-                const cloud = document.createElement('div');
-                cloud.className = 'cloud-container';
-                cloud.style.position = 'absolute';
-                cloud.style.transform = 'translateZ(0)'; // Force hardware acceleration
+                const el = document.createElement('div');
+                el.className = 'cloud-container';
 
-                // Set cloud dimensions - responsive to screen size
-                const baseSize = Math.max(60, Math.min(120, window.innerWidth / 8));
+                // Dimensions and horizontal positions use viewport-width units
+                const baseSize = Math.max(60, Math.min(120, window.innerWidth / 8)) / window.innerWidth * 100;
                 const cloudWidth = baseSize + Math.random() * baseSize * 1.5;
                 const heightRatio = 0.3 + Math.random() * 0.2;
 
                 // Create a more cohesive cloud shape
                 const mainCloud = document.createElement('div');
                 mainCloud.className = 'cloud';
-                mainCloud.style.width = cloudWidth + 'px';
-                mainCloud.style.height = (cloudWidth * heightRatio) + 'px';
+                mainCloud.style.width = cloudWidth + 'vw';
+                mainCloud.style.height = (cloudWidth * heightRatio) + 'vw';
                 mainCloud.style.borderRadius = '100px';
-                cloud.appendChild(mainCloud);
+                el.appendChild(mainCloud);
 
                 // Add puffs with significant overlap for a natural cloud look
                 const puffCount = 4 + Math.floor(Math.random() * 3);
@@ -152,76 +148,75 @@
 
                     // Larger puffs for better coverage
                     const puffSize = cloudWidth * (0.5 + Math.random() * 0.3);
-                    puff.style.width = Math.round(puffSize * 1.2) + 'px';
-                    puff.style.height = puffSize + 'px';
+                    puff.style.width = (puffSize * 1.2) + 'vw';
+                    puff.style.height = puffSize + 'vw';
 
                     // Create a tight, overlapping cluster of puffs
                     // This layout ensures puffs create a single cohesive shape
-                    puff.style.top = (-puffSize * 0.4) + 'px';
+                    puff.style.top = (-puffSize * 0.4) + 'vw';
 
                     // Spread puffs horizontally for oblong shape
                     const horizontalPos = cloudWidth * 0.1 + Math.random() * (cloudWidth * 0.8);
-                    puff.style.left = (horizontalPos - puffSize/2) + 'px';
+                    puff.style.left = (horizontalPos - puffSize/2) + 'vw';
 
-                    cloud.appendChild(puff);
+                    el.appendChild(puff);
                 }
 
-                // Position cloud in the top third of the screen
-                cloud.style.top = (Math.random() * (window.innerHeight * 0.33)) + 'px';
-                cloud.style.left = initialX + 'px';
-                sky.appendChild(cloud);
+                sky.appendChild(el);
 
-                // Store timestamp for frame-rate independent animation
-                let lastTimestamp = 0;
-                // Base speed on cloud width for more consistent feel across screen sizes
-                const pixelsPerSecond = (cloudWidth * 0.05) + (Math.random() * cloudWidth * 0.04);
-                let position = initialX;
+                const cloud = {
+                    el: el,
+                    x: initialX,
+                    width: cloudWidth,
+                    // Base speed on cloud width for a consistent feel across screen sizes
+                    speed: (cloudWidth * 0.05) + (Math.random() * cloudWidth * 0.04)
+                };
 
-                /**
-                 * Animation loop for cloud movement
-                 * Uses timestamp-based animation for consistent speed across browsers
-                 */
-                function animate(timestamp) {
-                    if (!lastTimestamp) lastTimestamp = timestamp;
-
-                    // Calculate time difference in seconds
-                    const deltaTime = (timestamp - lastTimestamp) / 1000;
-                    lastTimestamp = timestamp;
-
-                    // Move based on elapsed time rather than assuming frame rate
-                    position += pixelsPerSecond * deltaTime;
-
-                    // Use transform instead of changing left property for better performance
-                    cloud.style.transform = `translateZ(0) translateX(${position - initialX}px)`;
-
-                    const widthFudge = 25;
-                    // Reset cloud when it moves off-screen
-                    if (position > window.innerWidth + widthFudge) {
-                        initialX = position = 0 - cloudWidth - widthFudge;
-                        cloud.style.top = (Math.random() * (window.innerHeight * 0.33)) + 'px';
-                        cloud.style.left = position + 'px';
-                        lastTimestamp = timestamp; // Reset timestamp
-                    }
-
-                    requestAnimationFrame(animate);
-                }
-
-                requestAnimationFrame(animate);
+                place(cloud);
                 return cloud;
             }
 
-            // Initialize clouds
+            /**
+             * Positions a cloud and moves it to a random height in the top third
+             */
+            function place(cloud) {
+                cloud.el.style.top = (Math.random() * 33) + 'vh';
+                cloud.el.style.transform = `translate3d(${cloud.x}vw, 0, 0)`;
+            }
+
+            /**
+             * Animation loop for all clouds
+             * Uses timestamp-based animation for consistent speed across browsers
+             */
+            let lastTimestamp = 0;
+            function animate(timestamp) {
+                if (!lastTimestamp) lastTimestamp = timestamp;
+                const deltaTime = (timestamp - lastTimestamp) / 1000;
+                lastTimestamp = timestamp;
+
+                for (const cloud of clouds) {
+                    cloud.x += cloud.speed * deltaTime;
+
+                    // Wrap around when a cloud moves off-screen
+                    const widthFudge = 2;
+                    if (cloud.x > 100 + widthFudge) {
+                        cloud.x = 0 - cloud.width - widthFudge;
+                        place(cloud);
+                        continue;
+                    }
+
+                    cloud.el.style.transform = `translate3d(${cloud.x}vw, 0, 0)`;
+                }
+
+                requestAnimationFrame(animate);
+            }
+
             createClouds();
 
-            // Simple debounce function for resize events
-            function debounce(callback, delay = 250) {
-                clearTimeout(resizeTimer);
-                resizeTimer = setTimeout(callback, delay);
+            // Reduced motion keeps clouds static; viewport units still handle resizing
+            if (!reduceMotion) {
+                requestAnimationFrame(animate);
             }
-            // Handle window resizing with debounce
-            window.addEventListener('resize', function() {
-                debounce(createClouds);
-            });
         })();
     </script>
 </body>
