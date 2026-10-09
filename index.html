@@ -139,6 +139,14 @@
             const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
             const clouds = [];
 
+            // Drift rate in viewport widths per second, multiplied by the cloud's
+            // own width, so bigger (nearer) clouds move faster
+            const DRIFT_SPEED = 0.03;
+
+            // Uniform size bump. Drift still uses the unscaled width, so changing
+            // this doesn't quietly speed the clouds up or slow them down.
+            const CLOUD_SCALE = 1.2;
+
             /**
              * Creates clouds distributed across the screen width
              */
@@ -168,7 +176,8 @@
 
                 // Dimensions and horizontal positions use viewport-width units
                 const baseSize = Math.max(60, Math.min(120, window.innerWidth / 8)) / window.innerWidth * 100;
-                const cloudWidth = baseSize * (0.5 + depth * 0.7) * (1 + Math.random() * 0.8);
+                const shapeWidth = baseSize * (0.5 + depth * 0.7) * (1 + Math.random() * 0.8);
+                const cloudWidth = shapeWidth * CLOUD_SCALE;
                 const heightRatio = 0.3 + Math.random() * 0.2;
                 const bodyHeight = cloudWidth * heightRatio;
 
@@ -238,8 +247,7 @@
                     el: el,
                     x: initialX,
                     width: cloudWidth,
-                    // Base speed on cloud width for a consistent feel across screen sizes
-                    speed: (cloudWidth * 0.05) + (Math.random() * cloudWidth * 0.04)
+                    speed: shapeWidth * DRIFT_SPEED * (1 + Math.random() * 0.8)
                 };
 
                 place(cloud);
